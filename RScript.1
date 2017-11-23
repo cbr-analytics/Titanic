@@ -1,0 +1,190 @@
+#This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+train.df<-read.csv("train.csv", header = TRUE)
+test.df<-read.csv("test.csv", header = TRUE)
+summary(train.df)
+summary(train.df$SalePrice)
+summary(train.df$YearBuilt)
+
+library(ggplot2)
+
+#Plot to see distribution of Houses based on the BuiltYear.
+ggplot(train.df, aes(x = train.df$YearBuilt)) +
+  
+  geom_bar() +
+  
+  xlab("YearBuilt") +
+  
+  ylab("Total Count")
+
+install.packages("lattice")
+library(lattice)
+# Scatter plot: SalesPrice versus YearBuilt
+xyplot(SalePrice ~ YearBuilt, data= train.df,
+       xlab="YearBuilt",
+       ylab= "SalePrice",
+       main= "Correlation curve")
+# Scatter-plot: SaleType versus SalePrice
+xyplot(SalePrice ~ SaleType, data= train.df,
+       xlab="SalePrice",
+       ylab= "SaleType",
+       main= "Correlation curve")
+
+ggplot(train.df, aes(x = train.df$SaleType)) +
+  
+  geom_bar() +
+  
+  xlab("SaleType") +
+  
+  ylab("Total Count")
+
+#Scatter plot: SalePrice Versus MMSubClass
+xyplot(SalePrice ~ MSSubClass, data= train.df,
+       xlab="SalePrice",
+       ylab= "MMSubClass",
+       main= "Correlation curve")
+
+
+ggplot(train.df, aes(x = train.df$MSSubClass)) +
+  
+  geom_bar() +
+  
+  xlab("MSSubClass") +
+  
+  ylab("Total Count")
+
+xyplot(SalePrice ~ MSZoning, data= train.df,
+       xlab="SalePrice",
+       ylab= "MSZoning",
+       main= "Correlation curve"
+       )
+
+ggplot(train.df, aes(x = train.df$MSZoning)) +
+  
+  geom_bar() +
+  
+  xlab("MSZoning") +
+  
+  ylab("Total Count")
+
+ggplot(train.df, aes(x = train.df$Street)) +
+  
+  geom_bar() +
+  
+  xlab("Street") +
+  
+  ylab("Total Count")
+
+## SCALTTER_PLOT using ggplot2
+
+#Plot SalePrice Versus MSSZoning grouped by Street type
+ggplot(train.df, aes(x= "MSSZoning", y = "YearBuilt"))+
+       geom_point()
+
+ggplot(train.df, aes(x="SalePrice", y ="MSSubClass"))+
+  geom_histogram()
+
+xyplot(train.df$SalePrice ~ train.df$Street)
+
+
+submission.df<- read.csv("sample_submission.csv", header = TRUE)
+
+summary(train.df)
+
+
+# Predictive variables: YrSold, SaleCondition, Functional, CentralAir, Foundation, 
+# +  YearBuilt, OverallCond, OverallQual, BldgType, Condition2, Condition1, 
+# +  Neighborhood, Street, LotArea, MSZoning, MSSubClass
+
+#Prediction-ONE
+#  MSSubClass, LotArea, BldgType, YearBuilt, Neighborhood, SaleCondition
+
+test.SalePrice <- data.frame(SalePrice = rep("None", nrow(test.df)), test.df[,])
+
+#Combine test and train data..
+data.combined<-rbind(train.df, test.SalePrice)
+
+str(data.combined)
+
+#2 DATA Exploration
+str(data.combined$MSSubClass)
+str(data.combined$LotArea)
+str(data.combined$BldgType)
+str(data.combined$YearBuilt)
+str(data.combined$Neighborhood)
+str(data.combined$SaleCondition)
+
+summary(data.combined$MSSubClass)
+summary(data.combined$LotArea)
+summary(data.combined$BldgType)
+summary(data.combined$YearBuilt)
+summary(data.combined$Neighborhood)
+summary(data.combined$SaleCondition)
+
+table(data.combined$MSSubClass)
+?table
+table(data.combined$LotArea)
+table(data.combined$BldgType)
+table(data.combined$YearBuilt)
+table(data.combined$Neighborhood)
+table(data.combined$SaleCondition)
+
+ggplot(train.df, aes(x=train.df$MSSubClass))+
+  geom_bar()
+
+ggplot(train.df, aes(x=train.df$YearBuilt))+
+  geom_bar()+
+  xlab ("YearBuilt")+
+  ylab ("Total Count")
+
+ggplot(train.df, aes(x=train.df$Neighborhood))+
+  geom_bar()+
+  xlab ("Neighborhood")+
+  ylab ("Total Count")
+
+ggplot(train.df, aes(x=train.df$SaleCondition))+
+  geom_bar()+
+  xlab ("SaleCondition")+
+  ylab ("Total Count")
+
+
+#Build a predictive model using RANDOM_FOREST
+
+library(randomForest)
+#Predicting variables:
+#  MSSubClass, LotArea, BldgType, YearBuilt, Neighborhood, SaleCondition
+rf.train.1 <- data.combined[1:1460, c("MSSubClass", "LotArea", "BldgType", "YearBuilt", "Neighborhood", "SaleCondition")]
+
+#[ANSWER]
+rf.label <- train.df$SalePrice
+
+set.seed(2345)
+
+rf.1 <- randomForest(x = rf.train.1, y = rf.label, importance = TRUE, ntree = 1000)
+rf.1
+varImpPlot(rf.1)
+
+#Cutting test data from the data.combine table
+
+test.submit.df <- data.combined[1461:2919, c("MSSubClass", "LotArea", "BldgType", "YearBuilt", "Neighborhood", "SaleCondition")]
+
+
+rf.1.preds <- predict(rf.1, test.submit.df)
+
+table(rf.1.preds)
+
+submit.df <- data.frame(Id = rep(1461:2919), SalePrice= rf.1.preds)
+write.csv(submit.df, file = "Submission_20171116_1.csv", row.names = FALSE)
